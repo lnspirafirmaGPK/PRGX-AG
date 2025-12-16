@@ -51,4 +51,3 @@ jobs:
           --collection "inspirafirma" \
           --document-id "${{ github.event.issue.number || github.event.pull_request.number }}" \
           --fields 'echo_wave'="${{ steps.get-intent.outputs.echo_wave }}" \
-          --json-payload '{}
