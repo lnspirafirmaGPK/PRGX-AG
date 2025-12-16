@@ -1,4 +1,5 @@
 name: Inspirafirma AGIO Flow
+
 on:
   issues:
     types: [opened]
@@ -14,46 +15,41 @@ jobs:
       contents: write # จำเป็นสำหรับการเขียนไฟล์
 
     steps:
-    - name: 'Auto-assign issue'
-      uses: pozil/auto-assign-issue@v1
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        assignees: lnspirafirmaGPK
-        numOfAssignee: 1
+      - name: 'Auto-assign issue'
+        uses: pozil/auto-assign-issue@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          assignees: lnspirafirmaGPK
+          numOfAssignee: 1
 
-    - name: 'Get intent from issue/PR title and body'
-      id: get-intent
-      run: |
-        EVENT_PAYLOAD=$(cat ${{ github.event_path }})
-        if [ "${{ github.event_name }}" == "issues" ]; then
-          TITLE=$(echo "$EVENT_PAYLOAD" | jq -r '.issue.title')
-          BODY=$(echo "$EVENT_PAYLOAD" | jq -r '.issue.body')
-        else
-          TITLE=$(echo "$EVENT_PAYLOAD" | jq -r '.pull_request.title')
-          BODY=$(echo "$EVENT_PAYLOAD" | jq -r '.pull_request.body')
-        fi
-        
-        echo_wave_data="Title: ${TITLE} | Body: ${BODY}"
+      - name: 'Get intent from issue/PR title and body'
+        id: get-intent
+        run: |
+          # ดึงหัวข้อและเนื้อหาของ Issue หรือ PR
+          EVENT_PAYLOAD=$(cat ${{ github.event_path }})
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            TITLE=$(echo "$EVENT_PAYLOAD" | jq -r '.issue.title')
+            BODY=$(echo "$EVENT_PAYLOAD" | jq -r '.issue.body')
+          else
+            TITLE=$(echo "$EVENT_PAYLOAD" | jq -r '.pull_request.title')
+            BODY=$(echo "$EVENT_PAYLOAD" | jq -r '.pull_request.body')
+          fi
 
-        # ใช้วิธีการเขียนแบบ Here Document ซึ่งปลอดภัยสำหรับอักขระพิเศษและข้อความหลายบรรทัด
-        {
-          echo "echo_wave<<EOF"
-          echo "$echo_wave_data"
-          echo "EOF"
-        } >> $GITHUB_OUTPUT
+          # สร้าง "คลื่นแห่งความหมาย" (echo_wave) จากข้อมูลที่ได้
+          echo_wave_data="Title: ${TITLE} | Body: ${BODY}"
+          echo "echo_wave=${echo_wave_data}" >> $GITHUB_OUTPUT
 
-    - name: 'Send intent to Firestore'
-      uses: google-github-actions/setup-gcloud@v1
-      with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
+      - name: 'Setup gcloud'
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
 
-    - name: 'Write to SoulBase'
-      run: |
-        # เขียน "คลื่นแห่งความหมาย" ลงใน Firestore
-        gcloud firestore documents create "inspirafirma" \
-          --collection "inspirafirma" \
-          --document-id "${{ github.event.issue.number || github.event.pull_request.number }}" \
-          --fields 'echo_wave'="${{ steps.get-intent.outputs.echo_wave }}" \
-          --json-payload '{}'
-
+      - name: 'Write to SoulBase'
+        run: |
+          # เขียน "คลื่นแห่งความหมาย" ลงใน Firestore
+          gcloud firestore documents create "inspirafirma" \
+            --collection="inspirafirma" \
+            --document-id="${{ github.event.issue.number || github.event.pull_request.number }}" \
+            --fields="echo_wave=${{ steps.get-intent.outputs.echo_wave }}" \
+            --json-payload='{}'
