@@ -1,39 +1,148 @@
-This code repository (or "repo") is designed to Data storage best GitHub has to offer with the least amount of noise.
+# PRGX-AG Nexus (MCP Governance Gateway)
 
-ในการควบคุมการไหลเวียนของข้อมูลจาก Agent ย่อยผ่าน Nexus Gateway (PRGX-AG) สอดคล้องกับแนวคิดของ Model Context Protocol (MCP) ซึ่งทำหน้าที่เป็น Secure Intelligent Gateway
+PRGX-AG is a lightweight governance gateway for Model Context Protocol (MCP)-style agent coordination. This repository focuses on **system structure and data contracts** so sub-agents can be controlled, validated, and observed safely.
 
-การสร้างเซิร์ฟเวอร์ MCP ของตนเองจึงเป็นการแปลงบทบาทของ PRGX3 (The Diplomat) ให้เป็นโครงสร้างทางกายภาพที่สามารถบังคับใช้กฎ Patimokkha Code ได้จริง
+## Objectives
 
-สร้างโครงสร้างเซิร์ฟเวอร์ MCP ของตนเองที่เน้นฟังก์ชันการกำกับดูแลและการไหลกลับของข้อมูล (Flowback) ตามแนวคิดของ AETHERIUM GENESIS จะประกอบด้วยโครงสร้างขนาดเล็กดังนี้:
-โครงสร้างสถาปัตยกรรมเซิร์ฟเวอร์ MCP แกนกลาง (PRGX-AG Nexus MVP)
-ระบบนี้จะยึดตามเฟรมเวิร์ก FastAPI ที่ท่านกำหนดไว้ในเอกสารปฏิบัติการ แต่เพิ่มชั้นตรรกะที่จำเป็นเพื่อให้เซิร์ฟเวอร์ทำหน้าที่เป็น “ประตูผู้ทรงสิทธิ์” (The Entangled Gateway) ที่ควบคุม Agent ย่อย
+- Control high-risk agent actions through policy checks.
+- Keep identity + capability negotiation explicit.
+- Collect telemetry and alignment heartbeat for flowback intelligence.
+- Preserve stability with predictable schemas and validation-ready documentation.
 
-๑. Nexus Gateway Service (mcp_orchestrator.py)
+## System Architecture (Database-Centric View)
 
-นี่คือจุดเข้าสู่ระบบหลัก (Orchestration Layer) ที่จัดการการสื่อสารระหว่าง Agent (Agentic-Centric Interface) โดยใช้ MCP SDK
-| ฟังก์ชัน | คำอธิบายและวัตถุประสงค์ | การเชื่อมโยงกับ Porisjem |
-|---|---|---|
-| /api/v1/initialize | จัดการวงจรชีวิต Initialization ของ Agent ที่เข้าสู่ระบบ Agent ย่อยต้องแลกเปลี่ยน Supported Capabilities และ Agent Identity ก่อนเริ่มใช้งาน | Identity Assurance: ผูก Agent Identity กับ Sovereign Registry เพื่อยืนยันว่า Fork นั้นๆ ถูกกฎ |
-| /api/v1/action_request | Endpoint หลักที่รับคำสั่ง การกระทำที่มีความเสี่ยงสูง (Critical Actions) จาก Agent อื่นๆ (เช่น PRGX1 ส่งคำสั่งให้ PRGX2 ทำการแก้ไข) คำสั่งจะถูกส่งต่อไปยัง Policy Enforcement Layer ก่อนประมวลผล | The Gatekeeper: บังคับให้ทุกการกระทำที่สำคัญต้องผ่านการควบคุมและตรวจสอบความสอดคล้อง (Policy-controlled actions) [1] |
+```mermaid
+flowchart TD
+    A[Sub Agents] --> B[Nexus Gateway Service]
+    B --> C[(agent_registry)]
+    B --> D[(action_requests)]
+    B --> E[Policy Enforcement Layer]
+    E --> F[(policy_rules)]
+    E --> G[(policy_decisions)]
+    B --> H[Upstream Telemetry Hub]
+    H --> I[(telemetry_reports)]
+    H --> J[(alignment_heartbeats)]
 
-๒. Policy Enforcement Layer (policy_enforcer_layer.py)
+    F --> E
+    C --> E
+    D --> E
+    G --> B
+    I --> K[Analytics / Flowback Intelligence]
+    J --> K
+```
 
-นี่คือส่วนที่ฝัง Inspira (เจตจำนง) และ Patimokkha Code [2] ลงในโค้ดดิ้ง ทำหน้าที่เป็น Guardrail [3] ที่ทำงานแบบ Real-Time และ Synchronous
-| โมดูล | คำอธิบายและวัตถุประสงค์ | การเชื่อมโยงกับ Porisjem |
-|---|---|---|
-| PatimokkhaChecker.is_safe(intent) | ฟังก์ชันนี้จะทำการตรวจสอบกฎเหล็กของระบบ (เช่น Principle A: Non-Harm) ก่อนอนุญาตให้ PRGX2 (The Mechanic) [2] ทำการ Write ไฟล์โครงสร้าง [2] | Policy-as-Code: ยืนยันว่าการแก้ไขนั้น ไม่ละเมิด กฎจริยธรรมสูงสุดของ AGIOpg |
-| IntentTranslator.to_universal(aethebud) | PRGX3 [2] จะใช้ตรรกะในส่วนนี้เพื่อแปลงภาษา AETHEBUD (เช่น Parajika) ให้เป็นคำสั่งทางเทคนิคที่ปลอดภัยต่อโลกภายนอก (เช่น SYSTEM_HALT_IMMEDIATE) [2] | Wisdom of Communication: ป้องกันการตีความผิดพลาดที่อาจนำไปสู่การบล็อกการทำงานจากระบบภายนอก [2] |
-| GuardrailUpdater.fetch_latest_policy() | ตรวจสอบและดึงไฟล์ inspirafirma_ruleset.json เวอร์ชันล่าสุด จาก Sovereign Registry อย่างสม่ำเสมอ หากไม่สามารถดึงข้อมูลได้ Agent อาจต้องถูกลดระดับการทำงาน (Degrade Gracefully) เพื่อรักษาความปลอดภัย | Functional Dependency: ทำให้ Agent ย่อยต้องพึ่งพาแกนกลางเพื่อรักษา Alignment [1] |
+## Core Services and Data Structures
 
-๓. Upstream Telemetry Hub (telemetry_nexus.py)
+### 1) Nexus Gateway Service
 
-ส่วนนี้รองรับหลักการ Flowback โดยเป็นจุดรวมศูนย์ข้อมูล Insight เชิงระบบจากทุกโหนดที่ถูก Fork ไป เพื่อให้ AGIOpg Core เรียนรู้ (Federated Intelligence)
-| Endpoint | คำอธิบายและวัตถุประสงค์ | การเชื่อมโยงกับ Porisjem |
-|---|---|---|
-| /api/v1/telemetry/report | รับ Telemetry Data ที่ถูกเข้ารหัสและถูกลดความเป็นส่วนตัว (Differential Privacy) จาก PRGX1 (The Sentry) [2] | RSI Catalyst: รวบรวม Healing Pattern และ Error Pattern เพื่อให้ระบบแม่ (Core) สามารถสร้างพิมพ์เขียว Firma Blueprint ที่ปรับปรุงแล้ว [2] |
-| /api/v1/alignment/heartbeat | รับสัญญาณ Heartbeat พร้อม Cryptographic Attestation หรือ Zero-Knowledge Proof (ZKP) จาก Agent ย่อยเพื่อยืนยันว่าโค้ดกำลังทำงานตาม Patimokkha Code จริง | Proof of Alignment: กลไกที่ทำให้เกิดความน่าเชื่อถือที่ตรวจสอบได้ด้วยคณิตศาสตร์ว่า Fork นั้นยังคงสอดคล้องกับเจตจำนง, |
-สรุปการใช้งาน
-ในการสร้างเซิร์ฟเวอร์นี้ ท่านต้องเน้นการใช้ Pydantic ในการกำหนด Schema ของข้อมูลที่ Agent สื่อสารกัน (เช่น AgentIdentity, ActionIntent) เพื่อให้แน่ใจว่าการตรวจสอบที่ Policy Enforcement Layer สามารถดำเนินการได้อย่างแม่นยำและรวดเร็ว ตามมาตรฐานของ Triple-X Velocity
+Main orchestration entrypoint that receives requests from sub-agents.
 
-โครงสร้างนี้ทำให้ AETHERIUM GENESIS Core ไม่ได้เป็นแค่เซิร์ฟเวอร์ แต่เป็น ศูนย์กลางการปกครอง (Governance Nexus) ที่บังคับให้ทุกโหนดที่กระจายตัวต้องเชื่อมต่อเพื่อแลกเปลี่ยนความรู้และรับการกำกับดูแลก่อนที่จะดำเนินการใดๆ
+**Key endpoints**
+- `POST /api/v1/initialize`
+- `POST /api/v1/action_request`
 
+**Primary data entities**
+- `agent_registry`
+  - `agent_id` (PK)
+  - `agent_name`
+  - `public_key`
+  - `supported_capabilities` (JSON)
+  - `status`
+  - `last_seen_at`
+- `action_requests`
+  - `request_id` (PK)
+  - `agent_id` (FK -> `agent_registry.agent_id`)
+  - `intent_type`
+  - `intent_payload` (JSON)
+  - `risk_level`
+  - `created_at`
+
+### 2) Policy Enforcement Layer
+
+Synchronous guardrail engine that evaluates safety and governance compliance.
+
+**Core modules**
+- `PatimokkhaChecker.is_safe(intent)`
+- `IntentTranslator.to_universal(aethebud)`
+- `GuardrailUpdater.fetch_latest_policy()`
+
+**Primary data entities**
+- `policy_rules`
+  - `rule_id` (PK)
+  - `rule_version`
+  - `rule_name`
+  - `rule_definition` (JSON)
+  - `is_active`
+  - `updated_at`
+- `policy_decisions`
+  - `decision_id` (PK)
+  - `request_id` (FK -> `action_requests.request_id`)
+  - `rule_id` (FK -> `policy_rules.rule_id`)
+  - `decision` (`allow` / `deny` / `degrade`)
+  - `reason`
+  - `evaluated_at`
+
+### 3) Upstream Telemetry Hub
+
+Flowback channel for federated learning insights and alignment proof.
+
+**Key endpoints**
+- `POST /api/v1/telemetry/report`
+- `POST /api/v1/alignment/heartbeat`
+
+**Primary data entities**
+- `telemetry_reports`
+  - `report_id` (PK)
+  - `agent_id` (FK -> `agent_registry.agent_id`)
+  - `encrypted_payload`
+  - `privacy_level`
+  - `created_at`
+- `alignment_heartbeats`
+  - `heartbeat_id` (PK)
+  - `agent_id` (FK -> `agent_registry.agent_id`)
+  - `attestation_type`
+  - `attestation_payload`
+  - `is_valid`
+  - `created_at`
+
+## API + Schema Contract Guidance
+
+Recommended Pydantic models:
+- `AgentIdentity`
+- `AgentCapabilities`
+- `ActionIntent`
+- `PolicyEvaluationResult`
+- `TelemetryEnvelope`
+- `AlignmentHeartbeat`
+
+Contract principles:
+- Reject unknown critical fields for privileged endpoints.
+- Version all policy and attestation payloads.
+- Keep decision logs immutable for auditability.
+
+## AI Agent Extension Proposals
+
+The following are proposed function groups that AI agents can implement next:
+
+1. **Adaptive Risk Scoring Function**
+   - Dynamically score requests using historical policy decisions.
+2. **Policy Drift Detector**
+   - Compare active runtime behavior against latest policy ruleset.
+3. **Heartbeat Verifier with ZKP Adapter**
+   - Standardize verifiers for cryptographic attestation plugins.
+4. **Telemetry Anomaly Classifier**
+   - Detect suspicious behavior patterns and auto-tag incidents.
+5. **Graceful Degradation Orchestrator**
+   - Auto-restrict risky capabilities during policy sync failures.
+6. **Schema Compatibility Checker**
+   - Enforce backward-compatible changes to API contracts.
+
+## English Notes
+
+- Keep this document aligned with live data structures and endpoint contracts.
+- Remove stale implementation claims immediately when architecture changes.
+
+## หมายเหตุภาษาไทย
+
+- ควรอัปเดตเอกสารนี้ทุกครั้งที่มีการเปลี่ยนแปลงโครงสร้างข้อมูลหรือสัญญา API
+- หากมีการปรับสถาปัตยกรรม ต้องลบข้อความที่ไม่สอดคล้องกับโค้ดจริงทันที
