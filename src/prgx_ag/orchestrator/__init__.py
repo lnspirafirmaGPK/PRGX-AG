@@ -1,3 +1,3 @@
-from prgx_ag.orchestrator.nexus import PRGXAGNexus
+from prgx_ag.orchestrator.nexus import PRGX_AG_Nexus
 
-__all__ = ["PRGXAGNexus"]
+__all__ = ['PRGX_AG_Nexus']

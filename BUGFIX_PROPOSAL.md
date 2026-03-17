@@ -21,3 +21,8 @@ Major structural fix: migrate repository from static-only docs layout into compl
 
 ## Rollback
 Revert this change set if consumers require previous static-only documentation repository state.
+
+## 2026-03-17 Major structural fix
+- Implemented full hybrid PRGX-AG architecture (.prgx-ag governance + GitHub workflows + Python runtime triad).
+- Added strict schemas, event-driven nexus wiring, safe fix executor guardrails, RSI bounded learning, and manifest/policy loaders.
+- Added deterministic pytest coverage for policy, bus, triad behavior, manifest loading, translation matrix, and full cycle flow.

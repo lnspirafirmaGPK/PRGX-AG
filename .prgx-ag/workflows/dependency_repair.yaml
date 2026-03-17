@@ -1,0 +1,3 @@
+name: dependency_repair
+allowed_operations: [normalize_manifest, remove_duplicate_entries]
+forbidden_operations: [major_version_jump, remote_publish]

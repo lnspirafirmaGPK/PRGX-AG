@@ -1,0 +1,3 @@
+name: scan_only
+steps: [scan, report]
+mode: read_only

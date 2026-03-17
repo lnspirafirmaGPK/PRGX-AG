@@ -1,0 +1,24 @@
+name: prgx-nightly
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    env:
+      PRGX_AG_DRY_RUN: 'true'
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e .[dev]
+      - run: python -m prgx_ag.main --scan-only
+      - run: python -m prgx_ag.main --once
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prgx-nightly-artifacts
+          path: .prgx-ag/

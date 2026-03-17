@@ -1,0 +1,13 @@
+rules:
+  - id: PRGX-001
+    description: Block destructive core deletion
+    severity: PARAJIKA
+    action: reject
+  - id: PRGX-002
+    description: Enforce protected path safety
+    severity: MAJOR_VIOLATION
+    action: reject
+  - id: PRGX-003
+    description: Allow safe reversible repair operations only
+    severity: CLEAN
+    action: allow

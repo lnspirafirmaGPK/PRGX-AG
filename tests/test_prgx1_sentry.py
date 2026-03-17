@@ -8,14 +8,14 @@ from prgx_ag.core.aetherbus import AetherBus
 
 @pytest.mark.asyncio
 async def test_prgx1_does_not_write_files(tmp_path: Path) -> None:
-    (tmp_path / "README.md").write_text("x", encoding="utf-8")
-    (tmp_path / "src" / "prgx_ag").mkdir(parents=True)
-    (tmp_path / "src" / "prgx_ag" / "__init__.py").write_text("", encoding="utf-8")
-    (tmp_path / "tests").mkdir()
+    (tmp_path / 'README.md').write_text('x', encoding='utf-8')
+    (tmp_path / 'pyproject.toml').write_text('[project]\ndependencies=[]\n', encoding='utf-8')
+    (tmp_path / 'src' / 'pkg').mkdir(parents=True)
+    (tmp_path / 'src' / 'pkg' / '__init__.py').write_text('', encoding='utf-8')
+    (tmp_path / 'tests').mkdir()
 
-    bus = AetherBus()
-    sentry = PRGX1Sentry(bus=bus, root=tmp_path)
-    before = set(p.name for p in tmp_path.glob("**/*") if p.is_file())
+    sentry = PRGX1Sentry(bus=AetherBus(), root=tmp_path)
+    before = sorted(p.relative_to(tmp_path).as_posix() for p in tmp_path.glob('**/*') if p.is_file())
     await sentry.publish_issue_report()
-    after = set(p.name for p in tmp_path.glob("**/*") if p.is_file())
+    after = sorted(p.relative_to(tmp_path).as_posix() for p in tmp_path.glob('**/*') if p.is_file())
     assert before == after

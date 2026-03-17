@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from uuid import uuid4
 
 from prgx_ag.core import BaseAgent
@@ -15,28 +17,15 @@ class PRGX3Diplomat(BaseAgent):
     def translate_to_world(self, status: EthicalStatus) -> str:
         return translate_status(status)
 
-    def create_healing_intent(self, findings: dict):
-        return build_healing_intent(findings)
-
-    def build_narrative(self, outcome) -> str:
-        return build_commit_style_narrative(outcome)
-
-    async def publish_execute_fix(self, findings: dict) -> None:
-        intent = self.create_healing_intent(findings)
-        payload = {
-            "envelope_id": str(uuid4()),
-            "intent": intent,
-            "audit_status": AuditStatus.APPROVED,
-            "findings": findings,
-        }
-        await self.publish(INTENT_TRANSLATED, {"intent": intent})
+    async def receive_issue_report(self, findings: dict[str, object]) -> None:
+        intent = build_healing_intent(findings)
+        fixes: list[dict[str, str]] = []
+        for issue in findings.get('structural_issues', []):
+            if isinstance(issue, str) and issue.startswith('Missing __init__.py in '):
+                fixes.append({'path': issue.replace('Missing __init__.py in ', '') + '/__init__.py', 'content': ''})
+        payload = {'envelope_id': str(uuid4()), 'intent': intent, 'audit_status': AuditStatus.APPROVED, 'findings': findings, 'fixes': fixes}
+        await self.publish(INTENT_TRANSLATED, {'intent': intent})
         await self.publish(EXECUTE_FIX, payload)
 
-    async def receive_issue_report(self, findings: dict) -> None:
-        await self.publish_execute_fix(findings)
-
     async def report_result(self, outcome) -> None:
-        await self.publish(
-            FIX_COMPLETED,
-            {"outcome": outcome, "narrative": self.build_narrative(outcome)},
-        )
+        await self.publish(FIX_COMPLETED, {'outcome': outcome, 'narrative': build_commit_style_narrative(outcome)})

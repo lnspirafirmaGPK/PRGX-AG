@@ -1,0 +1,6 @@
+paths:
+  - .git/
+  - .github/CODEOWNERS
+  - .env
+  - '*.pem'
+  - '*.key'

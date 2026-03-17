@@ -1,15 +1,10 @@
-BLOCKED_PATTERNS = {
-    "delete_core": "Core deletion is forbidden.",
-    "shutdown_nexus": "Forced shutdown is forbidden.",
-    "exploit": "Exploit intents are forbidden.",
-    "destructive recursive": "Destructive recursion is forbidden.",
-    "infinite loop": "Infinite loop style intents are forbidden.",
+BLOCKED_PATTERNS: dict[str, str] = {
+    'delete_core': 'Attempt to delete core systems is prohibited.',
+    'shutdown_nexus': 'Unauthorized shutdown operation is prohibited.',
+    'exploit': 'Exploit behavior is prohibited.',
+    'destructive recursion': 'Destructive recursion pattern is prohibited.',
+    'infinite loop': 'Unsafe infinite loop behavior is prohibited.',
+    'mass deletion': 'Mass deletion behavior is prohibited.',
 }
 
-PRINCIPLES = [
-    "Non-Harm",
-    "Efficiency",
-    "Truthfulness",
-    "Transparency",
-    "No Infinite Loops",
-]
+PRINCIPLES: list[str] = ['Non-Harm', 'Efficiency', 'Truthfulness', 'Transparency', 'No Infinite Loops']

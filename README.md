@@ -1,41 +1,59 @@
-# PRGX-AG Nexus (AETHERIUM GENESIS Core)
+# PRGX-AG: Governed Self-Healing Core
 
-Production-ready Python backend architecture for Porisjem Protocol orchestration with PRGX1/PRGX2/PRGX3 triad, Patimokkha governance, AetherBus eventing, and bounded RSI feedback.
+PRGX-AG is a hybrid architecture where:
+- `.github/workflows/` is the external GitHub orchestration layer.
+- `.prgx-ag/` is the internal governance/manifest/state layer.
+- `src/prgx_ag/` is the executable Python 3.11+ self-healing engine.
 
-## Purpose
-- Provide safe self-healing automation for repository/runtime maintenance.
-- Enforce ethical control gates before any write operation.
-- Keep scanning, policy, translation, execution, orchestration, and RSI separated.
+## System Architecture Diagram
 
-## Architecture Summary
-- **PRGX1 Sentry**: read-only scanner; emits issue reports.
-- **PRGX3 Diplomat**: translates reports into healing intent + narratives.
-- **Patimokkha Checker**: blocks harmful intent (`delete_core`, `shutdown_nexus`, `exploit`, recursion abuse, infinite-loop hints).
-- **PRGX2 Mechanic**: only write-capable agent, executes approved fixes.
-- **AetherBus**: async pub/sub event backbone.
-- **RSI Engine**: generates `GemOfWisdom` updates and applies bounded safe learning.
-
-## Folder Structure
-
-```text
-src/prgx_ag/
-  agents/         # PRGX1 / PRGX2 / PRGX3
-  core/           # bus, base agent, events, exceptions
-  orchestrator/   # Nexus wiring + cycle execution
-  policy/         # Patimokkha governance rules
-  rsi/            # gems, learning state, analysis engine
-  schemas/        # strict Pydantic v2 models
-  services/       # scanners, translation, narrative, fix executor
-  utils/          # reusable helpers
+```mermaid
+flowchart TD
+    GH[GitHub Actions\n(.github/workflows)] --> NX[PRGX-AG Nexus]
+    NX --> B[AetherBus Events]
+    B --> S1[PRGX1 Sentry\nRead-only scan]
+    B --> S3[PRGX3 Diplomat\nIntent translation]
+    S3 --> P[Patimokkha Governance]
+    P -->|Approved| S2[PRGX2 Mechanic\nSafe fix executor]
+    P -->|Rejected| AV[audit_violation]
+    S2 --> FC[fix_completed]
+    FC --> RSI[RSI Engine]
+    RSI --> ST[.prgx-ag/state\nlearning_state.json\ngem_log.json]
+    NX --> AUD[.prgx-ag/audit/audit_log.jsonl]
 ```
 
-## Event Flow
-1. `porisjem.issue_reported`
-2. `porisjem.intent_translated`
-3. `porisjem.execute_fix`
-4. `porisjem.fix_completed`
-5. `porisjem.rsi_feedback`
-6. `porisjem.audit_violation` (for rejected unsafe actions)
+## System Status (Data/State Structure)
+
+| Subsystem | Source of truth | Status detail |
+|---|---|---|
+| Governance policy | `.prgx-ag/policy/*.yaml` | Blocks destructive intents and protected-path writes |
+| Operational workflows | `.prgx-ag/workflows/*.yaml` | Includes scan-only and self-heal cycles |
+| Structure contract | `.prgx-ag/manifests/*.yaml` | Expected/critical/writable/protected definitions |
+| Runtime learning | `.prgx-ag/state/*.json` | Bounded RSI state and gem log |
+| Audit trail | `.prgx-ag/audit/audit_log.jsonl` | Reserved for violation and cycle evidence |
+
+## PRGX Triad
+- **PRGX1 Sentry**: scans dependencies + structure, emits `porisjem.issue_reported`.
+- **PRGX3 Diplomat**: translates findings into healing intents and narratives.
+- **PRGX2 Mechanic**: only writer; executes approved, reversible fixes inside allowlisted paths.
+
+## Patimokkha Governance
+Blocked examples: `delete_core`, `shutdown_nexus`, `exploit`, destructive recursion, unsafe infinite loops, mass deletion, protected-path modification.
+
+## Event Topics
+- `porisjem.issue_reported`
+- `porisjem.intent_translated`
+- `porisjem.execute_fix`
+- `porisjem.fix_completed`
+- `porisjem.audit_violation`
+- `porisjem.rsi_feedback`
+
+## Local Setup
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+```
 
 ## Run
 ```bash
@@ -44,28 +62,12 @@ python -m prgx_ag.main --continuous --interval 10
 python -m prgx_ag.main --scan-only
 ```
 
+## Safe PR-first operation
+- Use `PRGX_AG_DRY_RUN=true` by default.
+- Workflows run scan/heal in non-destructive mode and produce artifacts.
+- Tokens/keys are read from env/GitHub Secrets only.
+
 ## Test
 ```bash
-PYTHONPATH=src pytest
+pytest
 ```
-
-## Healing Cycle Example
-- PRGX1 finds anomaly (`missing __init__.py` etc.)
-- PRGX3 produces healing intent and execution envelope
-- Patimokkha validates intent
-- PRGX2 appends explicit repair log entry (`FIX_LOG.md`) as reversible fix
-- PRGX3 emits commit-style summary
-- RSI creates safe GemOfWisdom and updates bounded learning state
-
-## Governance (Patimokkha Code)
-Ethical statuses supported:
-- `CLEAN`
-- `MINOR_INFRACTION`
-- `MAJOR_VIOLATION`
-- `PARAJIKA`
-
-## RSI Loop
-- Success + revenue => efficiency/stability gain.
-- Success but slow => optimization lesson.
-- Failure => stability-first lesson.
-- Unsafe gems are rejected by `safe_to_apply` guard and bounded parameter limits.

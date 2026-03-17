@@ -1,0 +1,3 @@
+name: self_healing
+steps: [scan, translate_intent, policy_audit, execute_safe_fix, report, rsi_feedback]
+mode: pr_first

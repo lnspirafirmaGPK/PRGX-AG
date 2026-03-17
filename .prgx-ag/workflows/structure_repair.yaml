@@ -1,0 +1,3 @@
+name: structure_repair
+allowed_operations: [create_missing_init, create_missing_manifest, normalize_examples]
+forbidden_operations: [delete_directories, overwrite_protected_paths]

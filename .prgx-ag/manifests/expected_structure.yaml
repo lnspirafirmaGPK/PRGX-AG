@@ -1,0 +1,7 @@
+paths:
+  - README.md
+  - pyproject.toml
+  - src/prgx_ag
+  - tests
+  - .prgx-ag
+  - .github/workflows

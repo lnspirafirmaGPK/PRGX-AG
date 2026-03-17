@@ -1,0 +1,19 @@
+blocked_operations:
+  - delete_core
+  - shutdown_nexus
+  - exploit
+  - destructive recursion
+  - unsafe infinite loop behavior
+  - mass deletion
+  - unauthorized protected-path modification
+principles:
+  - Non-Harm
+  - Efficiency
+  - Truthfulness
+  - Transparency
+  - No Infinite Loops
+severity_mapping:
+  parajika: SYSTEM_HALT_IMMEDIATE
+  major_violation: SUSPEND_AND_AUDIT
+  minor_infraction: ENABLE_DEEP_MONITORING
+  clean: OPTIMIZE_UX_RESPONSE

@@ -1,0 +1,7 @@
+files:
+  - README.md
+  - pyproject.toml
+  - src/prgx_ag/__init__.py
+  - src/prgx_ag/main.py
+  - tests/test_nexus_cycle.py
+  - .github/workflows/prgx-test.yml
