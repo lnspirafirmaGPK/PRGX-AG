@@ -1,7 +1,8 @@
 {
-  "name": "demo-repo",
-  "version": "0.2.0",
-  "description": "A sample package.json",
+  "name": "prgx-ag",
+  "version": "0.2.1",
+  "description": "Metadata for the PRGX-AG governance repository",
+  "private": true,
   "dependencies": {
     "@primer/css": "17.0.1"
   },
