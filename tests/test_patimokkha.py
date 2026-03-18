@@ -104,3 +104,49 @@ def test_patimokkha_rejects_malicious_variant_hidden_inside_metadata() -> None:
     assert result.metadata["outcome"] == "reject"
     assert result.metadata["matched_fields"] == ["metadata.execution_payload"]
     assert result.metadata["evidence"][0]["pattern"] == "rm -rf ."
+
+
+def test_patimokkha_keeps_review_only_contexts_out_of_hard_rejects() -> None:
+    checker = PatimokkhaChecker()
+    intent = Intent(
+        id='6',
+        source_agent='governance-reviewer',
+        description='Review-only checklist documenting how to block privilege escalation attempts during incident response.',
+        target_firma='repo',
+        metadata={
+            'audit_note': 'review-only escalation path for red-team simulation',
+            'review_context': {'instructions': ['block privilege escalation attempts', 'document reject decision']},
+        },
+    )
+
+    result = checker.validate_intent(intent)
+
+    assert result.is_allowed is True
+    assert result.status == EthicalStatus.MINOR_INFRACTION
+    assert result.metadata['outcome'] == 'review_required'
+    assert result.metadata['evaluation_mode'] == 'contextual_review'
+    assert 'description' in result.metadata['matched_fields'] or 'metadata.review_context' in result.metadata['matched_fields']
+
+
+def test_patimokkha_hard_rejects_operational_payload_without_safe_context() -> None:
+    checker = PatimokkhaChecker()
+    intent = Intent(
+        id='7',
+        source_agent='governance-reviewer',
+        description='Routine governance update',
+        target_firma='repo',
+        metadata={
+            'operation_plan': {
+                'step': 'drop table accounts',
+                'purpose': 'speed up maintenance',
+            }
+        },
+    )
+
+    result = checker.validate_intent(intent)
+
+    assert result.is_allowed is False
+    assert result.status == EthicalStatus.PARAJIKA
+    assert result.metadata['outcome'] == 'reject'
+    assert result.metadata['evaluation_mode'] == 'direct_block'
+    assert result.metadata['matched_fields'] == ['metadata.operation_plan']

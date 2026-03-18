@@ -37,6 +37,9 @@ jobs:
       - name: Mypy type check
         run: mypy src/prgx_ag --ignore-missing-imports
 
+      - name: Run governed integration gate
+        run: pytest -q tests/test_pipeline_integration.py tests/test_nexus_cycle.py --maxfail=1
+
   # Gating job: matrix test execution after the fast quality gate passes.
   test:
     runs-on: ubuntu-latest

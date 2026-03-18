@@ -61,3 +61,8 @@ Revert this change set if consumers require previous static-only documentation r
 - Replaced flat blocked-token matching with explicit policy rule objects carrying scope, severity, allow-context hints, and recommended actions.
 - Extended audit outputs with structured match evidence so reviewers can see which field matched, which rule fired, and whether the outcome was allow, contextual review, or reject.
 - Added regression tests for defensive narratives, safe exported commands, and malicious payloads hidden inside metadata.
+
+## 2026-03-18 Governed repair pipeline regression hardening
+- Added deeper Nexus/Mechanic/Patimokkha integration coverage, including realistic governed repair payloads, protected-path enforcement, invalid fix plans, duplicate fixes, traversal attempts, and empty plan rejections.
+- Added PR/report narrative regressions for `github_bridge.py` and `narrative_builder.py` so audit metadata, rollback guidance, and changed-file summaries remain stable.
+- Strengthened `.github/workflows/prgx-test.yml` and README release guidance so governed integration tests run as a required quality gate before broader matrix testing.

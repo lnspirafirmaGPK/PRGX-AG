@@ -147,7 +147,15 @@ python -m prgx_ag.main --scan-only
 ## Testing
 ```bash
 pytest
+pytest -q tests/test_pipeline_integration.py tests/test_nexus_cycle.py
 ```
+
+### Required release checks
+- `python -m compileall src`
+- `ruff check .`
+- `mypy src/prgx_ag --ignore-missing-imports`
+- `pytest -q tests/test_pipeline_integration.py tests/test_nexus_cycle.py --maxfail=1`
+- `pytest -q --maxfail=1`
 
 ## Safety Boundaries
 - PRGX1 is strictly read-only and does not write files.
