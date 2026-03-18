@@ -71,3 +71,8 @@ Revert this change set if consumers require previous static-only documentation r
 - Introduced explicit governed fix classes (`create_empty_init`, `manifest_sync`, `dependency_bump`) with validator metadata instead of relying on generic empty-file writes.
 - Added dependency allowlist policy data so automatic manifest edits are limited to preapproved package/range pairs and minor-only bump rules.
 - Captured per-fix snapshots, rollback metadata, and post-fix verification results so PR narratives can explain safety, validation, and deterministic reversion paths.
+
+## 2026-03-18 Repository metadata and test-noise cleanup
+- Removed the unused `pytest-asyncio` configuration path from `pyproject.toml` so the test suite no longer emits an unknown-config warning in environments that do not install that plugin.
+- Rewrote `README.md` to keep the architecture summary aligned with the actual `.prgx-ag` governance assets and to explicitly exclude completed-suggestion lists from both English and Thai summaries.
+- Replaced leftover demo metadata in `index.html` and `package.json` with repository-accurate PRGX-AG descriptions.

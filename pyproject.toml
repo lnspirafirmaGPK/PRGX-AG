@@ -16,8 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=8.0",
-  "pytest-asyncio>=0.23"
+  "pytest>=8.0"
 ]
 
 [tool.setuptools]
@@ -29,5 +28,4 @@ where = ["src"]
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
-asyncio_mode = "auto"
 pythonpath = ["src"]
