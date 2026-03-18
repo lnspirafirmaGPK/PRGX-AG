@@ -7,14 +7,15 @@ from prgx_ag.orchestrator import PRGX_AG_Nexus
 
 
 @pytest.mark.asyncio
-async def test_full_nexus_cycle(tmp_path: Path) -> None:
+async def test_full_nexus_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / 'README.md').write_text('x', encoding='utf-8')
-    (tmp_path / 'pyproject.toml').write_text('[project]\ndependencies=[]\n', encoding='utf-8')
     (tmp_path / 'src' / 'prgx_ag').mkdir(parents=True)
-    (tmp_path / 'src' / 'prgx_ag' / '__init__.py').write_text('', encoding='utf-8')
+    (tmp_path / 'src' / 'prgx_ag' / 'module').mkdir(parents=True)
+    (tmp_path / 'src' / 'prgx_ag' / 'module' / 'worker.py').write_text('VALUE = 1\n', encoding='utf-8')
     (tmp_path / 'tests').mkdir()
 
-    settings = Settings(repo_root=tmp_path, dry_run=True)
+    monkeypatch.setenv('PRGX_AG_REPO_ROOT', str(tmp_path))
+    settings = Settings(dry_run=True)
     nexus = PRGX_AG_Nexus(settings)
     await nexus.run_once()
 
