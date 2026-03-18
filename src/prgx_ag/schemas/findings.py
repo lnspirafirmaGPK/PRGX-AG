@@ -1,35 +1,61 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from prgx_ag.schemas.enums import EthicalStatus
 
 
 class Finding(BaseModel):
-    """Read-only anomaly emitted by PRGX1."""
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
-    model_config = ConfigDict(extra='forbid', strict=True)
-
-    id: str
-    source: str
     category: str
-    severity: str
-    description: str
-    file_paths: list[str] = Field(default_factory=list)
+    message: str
+    path: str | None = None
+    severity: EthicalStatus | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @field_validator("category", "message")
+    @classmethod
+    def _normalize_required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("path")
+    @classmethod
+    def _normalize_optional_path(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip().replace("\\", "/")
+        return value or None
 
 
 class IssueReport(BaseModel):
-    """Bundle of findings published to the AetherBus."""
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
-    model_config = ConfigDict(extra='forbid', strict=True)
-
-    id: str
-    source: str
+    summary: str = "repository scan completed"
+    target: str = "repository"
+    dependency_issues: list[str] = Field(default_factory=list)
+    structural_issues: list[str] = Field(default_factory=list)
+    integrity_issues: list[str] = Field(default_factory=list)
+    issue_count: int = 0
+    requires_fix: bool = False
     findings: list[Finding] = Field(default_factory=list)
-    summary: str
-    target: str
-    metadata: dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @field_validator("summary", "target")
+    @classmethod
+    def _normalize_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("issue_count")
+    @classmethod
+    def _non_negative_issue_count(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("issue_count must be >= 0")
+        return value
