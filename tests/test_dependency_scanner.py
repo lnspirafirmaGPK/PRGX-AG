@@ -23,3 +23,17 @@ def test_dependency_scanner_flags_invalid_requirement_line(tmp_path: Path) -> No
     anomalies = scan_dependency_anomalies(tmp_path)
 
     assert anomalies == ['Malformed requirement entries in requirements.txt']
+
+
+def test_dependency_scanner_allows_bare_pip_url_path_and_vcs_entries(tmp_path: Path) -> None:
+    manifest = tmp_path / 'requirements.txt'
+    manifest.write_text(
+        'git+https://github.com/pallets/click.git\n'
+        './local_pkg\n'
+        'https://files.pythonhosted.org/packages/example.whl\n',
+        encoding='utf-8',
+    )
+
+    anomalies = scan_dependency_anomalies(tmp_path)
+
+    assert anomalies == []

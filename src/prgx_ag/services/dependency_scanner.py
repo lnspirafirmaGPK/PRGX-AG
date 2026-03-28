@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
+from urllib.parse import urlparse
 
 from packaging.requirements import InvalidRequirement, Requirement
 
 
 DIRECTIVE_PREFIXES = ('-r', '--requirement', '-c', '--constraint', '--index-url', '--extra-index-url', '-f', '--find-links')
 EDITABLE_PREFIXES = ('-e ', '--editable ')
+VCS_PREFIXES = ('git+', 'hg+', 'svn+', 'bzr+')
+URL_SCHEMES = {'http', 'https', 'ftp', 'ftps', 'file'}
+ARCHIVE_SUFFIXES = ('.whl', '.zip', '.tar.gz', '.tgz', '.tar.bz2', '.tar.xz')
 
 
 def find_dependency_manifests(root: Path) -> list[Path]:
@@ -35,6 +40,23 @@ def _is_malformed_requirement(line: str) -> bool:
     try:
         Requirement(requirement_text)
     except InvalidRequirement:
+        if _is_valid_pip_reference(requirement_text):
+            return False
+        return True
+    return False
+
+
+def _is_valid_pip_reference(requirement_text: str) -> bool:
+    lowered = requirement_text.lower()
+    if lowered.startswith(VCS_PREFIXES):
+        return True
+    if lowered.endswith(ARCHIVE_SUFFIXES):
+        return True
+    if requirement_text.startswith(('./', '../', '/', '~')) or re.match(r'^[A-Za-z]:[\\/]', requirement_text):
+        return True
+
+    parsed = urlparse(requirement_text)
+    if parsed.scheme.lower() in URL_SCHEMES:
         return True
     return False
 
