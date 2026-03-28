@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = Field(default=None, alias='OPENAI_API_KEY')
     allowed_write_paths: str | None = Field(default=None, alias='PRGX_AG_ALLOWED_WRITE_PATHS')
     protected_paths: str | None = Field(default=None, alias='PRGX_AG_PROTECTED_PATHS')
-    audit_window_hours: int = Field(default=24, alias='PRGX_AUDIT_WINDOW_HOURS')
+    audit_window_hours: int = Field(default=24, alias='PRGX_AUDIT_WINDOW_HOURS', ge=1)
     medical_findings_path: str = Field(
         default='.prgx-ag/evidence/medical_research_findings.json',
         alias='PRGX_MEDICAL_FINDINGS_PATH',
