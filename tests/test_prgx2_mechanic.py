@@ -157,3 +157,32 @@ def test_prgx2_dry_run_dependency_bump_keeps_repository_unchanged(tmp_path: Path
         assert pyproject.read_text(encoding='utf-8') == original
         assert not src_dir.exists()
     asyncio.run(_run())
+
+
+def test_prgx2_dry_run_marks_unwritable_create_empty_init_as_failed_verification(tmp_path: Path) -> None:
+    async def _run() -> None:
+        blocking_path = tmp_path / 'src' / 'pkg'
+        blocking_path.parent.mkdir(parents=True, exist_ok=True)
+        blocking_path.write_text('not-a-directory', encoding='utf-8')
+
+        mech = PRGX2Mechanic(AetherBus(), tmp_path, PatimokkhaChecker(), ['src/', 'pyproject.toml'], ['.git/'], dry_run=True)
+        payload = {
+            'envelope_id': 'dry-run-unwritable',
+            'intent': Intent(id='intent-unwritable', source_agent='agent', description='Validate dry-run path feasibility', target_firma='repo'),
+            'audit_status': AuditStatus.APPROVED,
+            'fixes': [
+                {
+                    'path': 'src/pkg/__init__.py',
+                    'content': '',
+                    'fix_class': 'create_empty_init',
+                    'validator': 'validate_empty_init_fix',
+                }
+            ],
+        }
+
+        out = await mech.apply_shadow_fix('repo', payload)
+        assert out.success is True
+        assert out.details['verification_status'] == 'failed'
+        assert out.details['verification_results'][0]['passed'] is False
+        assert 'non-writable target path' in out.details['verification_results'][0]['summary']
+    asyncio.run(_run())
