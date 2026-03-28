@@ -128,3 +128,9 @@ Revert this change set if consumers require previous static-only documentation r
 - Corrected `.github/workflows/main.yml` dispatch-mode behavior so `mode=scan-only` no longer runs the test phase unexpectedly.
 - Added explicit job timeouts across all active workflows to prevent stuck CI jobs from consuming unlimited runner time.
 - Removed unused `GITHUB_TOKEN` environment exports from scheduled automation jobs where the token is not directly consumed by runtime commands.
+
+## 2026-03-28 Documentation governance and policy-file alignment refresh
+- Updated `README.md` system architecture ER diagram to align more explicitly with the repository-backed `.prgx-ag` data model, including dependency allowlist and legacy path-list mirrors.
+- Removed completed-recommendation mixing by defining forward-looking-only proposal sections in both English and Thai.
+- Added `SECURITY.md` to define vulnerability reporting, response targets, scope boundaries, and safe-harbor expectations.
+- Added `COPYRIGHT.md` to document repository copyright ownership and third-party notice expectations.

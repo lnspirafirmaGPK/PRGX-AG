@@ -38,7 +38,7 @@ The codebase keeps intention, observation, interpretation, execution, ethics, an
 
 ## System Architecture Diagram (Database-State Aligned)
 
-The runtime is organized around the `.prgx-ag` data stores. Nexus loads policy and manifests, runs bounded workflows, and persists audit plus learning state back into the repository as durable operational data.
+The runtime is organized around the `.prgx-ag` data stores. Nexus loads policy/manifests/allowlists, routes workflow execution, and persists audit plus learning state into repository-backed operational records.
 
 ```mermaid
 erDiagram
@@ -71,9 +71,49 @@ erDiagram
       array paths
     }
 
+    WRITABLE_PATHS_TXT {
+      array paths
+    }
+
+    PROTECTED_PATHS_TXT {
+      array paths
+    }
+
+    DEPENDENCY_POLICY {
+      array allowed_dependencies
+      string version_strategy
+    }
+
     TRANSLATION_MATRIX {
       string buddhic_term
       string runtime_action
+    }
+
+    SELF_HEALING_WORKFLOW {
+      array steps
+      string mode
+    }
+
+    STRUCTURE_REPAIR_WORKFLOW {
+      array allowed_operations
+      array forbidden_operations
+    }
+
+    DEPENDENCY_REPAIR_WORKFLOW {
+      array allowed_operations
+      array forbidden_operations
+    }
+
+    SCAN_ONLY_WORKFLOW {
+      array steps
+      string mode
+    }
+
+    AUDIT_LOG {
+      jsonl ts
+      string event
+      string actor
+      string details
     }
 
     LEARNING_STATE {
@@ -88,43 +128,19 @@ erDiagram
       boolean safe_to_apply
     }
 
-    AUDIT_LOG {
-      jsonl ts
-      string event
-      string actor
-      string details
-    }
-
-    STRUCTURE_REPAIR_WORKFLOW {
-      array allowed_operations
-      array forbidden_operations
-    }
-
-    DEPENDENCY_REPAIR_WORKFLOW {
-      array allowed_operations
-      array forbidden_operations
-    }
-
-    SELF_HEALING_WORKFLOW {
-      array steps
-      string mode
-    }
-
-    SCAN_ONLY_WORKFLOW {
-      array steps
-      string mode
-    }
-
-    PATIMOKKHA_POLICY ||--o{ RULESET_POLICY : constrains
-    EXPECTED_STRUCTURE ||--|| CRITICAL_FILES : defines_required_assets
-    WRITABLE_PATHS ||--|| PROTECTED_PATHS : bounds_write_surface
-    TRANSLATION_MATRIX ||--o{ SELF_HEALING_WORKFLOW : informs_intent_translation
+    PATIMOKKHA_POLICY ||--o{ RULESET_POLICY : enforces
+    EXPECTED_STRUCTURE ||--|| CRITICAL_FILES : validates_layout
+    WRITABLE_PATHS ||--|| PROTECTED_PATHS : bounds_manifest_writes
+    WRITABLE_PATHS ||--|| WRITABLE_PATHS_TXT : mirrors_legacy_list
+    PROTECTED_PATHS ||--|| PROTECTED_PATHS_TXT : mirrors_legacy_list
+    DEPENDENCY_POLICY ||--|| DEPENDENCY_REPAIR_WORKFLOW : gates_dependency_fixes
+    TRANSLATION_MATRIX ||--o{ SELF_HEALING_WORKFLOW : maps_intent
     SELF_HEALING_WORKFLOW ||--|| STRUCTURE_REPAIR_WORKFLOW : dispatches
     SELF_HEALING_WORKFLOW ||--|| DEPENDENCY_REPAIR_WORKFLOW : dispatches
-    SELF_HEALING_WORKFLOW ||--|| SCAN_ONLY_WORKFLOW : parallels_governance_modes
-    SELF_HEALING_WORKFLOW ||--o{ AUDIT_LOG : records_repair_attempts
-    LEARNING_STATE ||--o{ GEM_LOG : emits_lessons
+    SELF_HEALING_WORKFLOW ||--|| SCAN_ONLY_WORKFLOW : selects_mode
+    SELF_HEALING_WORKFLOW ||--o{ AUDIT_LOG : records_actions
     AUDIT_LOG ||--|| LEARNING_STATE : feeds_rsi_feedback
+    LEARNING_STATE ||--o{ GEM_LOG : emits_lessons
 ```
 
 ### `.prgx-ag` Data Layout
@@ -222,3 +238,23 @@ The repository now reserves three GitHub Environments for workflow-controlled de
 - มีการอธิบายศัพท์เฉพาะควบคู่กับคำมาตรฐานของซอฟต์แวร์เพื่อลด learning curve.
 - ไฟล์ `package.json` และ `index.html` ที่ root เป็น metadata/proofing artifacts ของรีโป ไม่ได้หมายความว่าโปรเจ็กต์นี้เป็น JavaScript frontend.
 - สถานะการยอมรับจากชุมชนควรถูกอธิบายอย่างระมัดระวังว่าเป็นโครงการระยะเริ่มต้น จนกว่าจะมีการใช้งานสาธารณะที่ชัดเจน.
+
+## New Feature / Extension Proposals (Forward-Looking Only)
+
+> Completed recommendations are intentionally excluded so this list stays focused on pending work.
+
+1. **Policy simulation sandbox**: add `--simulate-policy` mode that runs Patimokkha/ruleset checks against hypothetical fix plans without modifying repository state.
+2. **Workflow drift dashboard export**: generate machine-readable drift summaries (`json/csv`) for nightly and PR healing runs so external observability tools can trend anomalies over time.
+3. **Controlled auto-rollback hook**: add opt-in rollback execution from stored fix snapshots when post-fix verification fails in governed CI.
+4. **Environment profile packs**: provide typed runtime profiles (`development/staging/production`) with per-environment repair thresholds and audit verbosity.
+5. **Governance evidence bundle**: package audit log slices, fix-plan metadata, and policy decisions into a signed artifact for compliance review.
+
+## ข้อเสนอฟังก์ชัน/แนวทางต่อยอดใหม่ (เฉพาะงานที่ยังไม่เสร็จ)
+
+> จงใจไม่ใส่ “ข้อเสนอแนะที่ทำเสร็จแล้ว” เพื่อไม่ให้ปะปนกับงานที่กำลังพัฒนา
+
+1. **โหมดจำลองนโยบาย (Policy simulation sandbox)**: เพิ่มโหมด `--simulate-policy` เพื่อทดสอบกฎ Patimokkha/ruleset กับ fix plan สมมติ โดยไม่เขียนไฟล์ลงรีโป
+2. **รายงาน workflow drift สำหรับแดชบอร์ด**: ส่งออกสรุป drift เป็น `json/csv` จากงาน nightly และ PR healing เพื่อทำแนวโน้มความผิดปกติ
+3. **กลไก auto-rollback แบบควบคุมได้**: เพิ่ม rollback แบบ opt-in จาก snapshot เดิม เมื่อ post-fix verification ล้มเหลวใน CI
+4. **ชุด environment profile แบบกำหนดชนิด**: แยก profile `development/staging/production` พร้อม threshold การซ่อมและระดับ audit log ที่ต่างกัน
+5. **ชุดหลักฐาน governance**: รวมช่วงข้อมูล audit log, metadata ของ fix-plan และผลการตัดสินใจเชิงนโยบายเป็น artifact ที่ลงลายเซ็นเพื่อตรวจสอบ compliance
