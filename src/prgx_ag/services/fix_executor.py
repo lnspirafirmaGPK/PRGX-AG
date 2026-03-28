@@ -168,19 +168,28 @@ def _verify_fix(target: Path, fix: FixPlanEntry, rendered_content: str) -> dict[
 
 
 def _detect_write_path_issue(repo_root: Path, target: Path) -> str | None:
+    def _format_path(path: Path) -> str:
+        try:
+            return str(path.relative_to(repo_root))
+        except ValueError:
+            return str(path)
+
     if target.exists() and target.is_dir():
-        return f"target path is an existing directory: {target.relative_to(repo_root)}"
+        return f"target path is an existing directory: {_format_path(target)}"
 
     parent = target.parent
     if parent.exists() and not parent.is_dir():
-        return f"target parent is not a directory: {parent.relative_to(repo_root)}"
+        return f"target parent is not a directory: {_format_path(parent)}"
 
-    rel_parent = parent.relative_to(repo_root)
+    try:
+        rel_parent = parent.relative_to(repo_root)
+    except ValueError:
+        return f"target parent escapes repo root: {_format_path(parent)}"
     cursor = repo_root
     for segment in rel_parent.parts:
         cursor = cursor / segment
         if cursor.exists() and not cursor.is_dir():
-            return f"mkdir would fail because path segment is a file: {cursor.relative_to(repo_root)}"
+            return f"mkdir would fail because path segment is a file: {_format_path(cursor)}"
 
     return None
 

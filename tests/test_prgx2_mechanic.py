@@ -186,3 +186,33 @@ def test_prgx2_dry_run_marks_unwritable_create_empty_init_as_failed_verification
         assert out.details['verification_results'][0]['passed'] is False
         assert 'non-writable target path' in out.details['verification_results'][0]['summary']
     asyncio.run(_run())
+
+
+def test_prgx2_dry_run_handles_symlinked_allowed_path_outside_repo(tmp_path: Path) -> None:
+    async def _run() -> None:
+        external_root = tmp_path.parent / f'{tmp_path.name}-external'
+        external_root.mkdir(parents=True, exist_ok=True)
+        symlink_root = tmp_path / 'linked'
+        symlink_root.symlink_to(external_root, target_is_directory=True)
+
+        mech = PRGX2Mechanic(AetherBus(), tmp_path, PatimokkhaChecker(), ['linked/'], ['.git/'], dry_run=True)
+        payload = {
+            'envelope_id': 'dry-run-symlink-outside',
+            'intent': Intent(id='intent-symlink-outside', source_agent='agent', description='Validate dry-run path feasibility via symlink', target_firma='repo'),
+            'audit_status': AuditStatus.APPROVED,
+            'fixes': [
+                {
+                    'path': 'linked/pkg/__init__.py',
+                    'content': '',
+                    'fix_class': 'create_empty_init',
+                    'validator': 'validate_empty_init_fix',
+                }
+            ],
+        }
+
+        out = await mech.apply_shadow_fix('repo', payload)
+        assert out.success is True
+        assert out.details['verification_status'] == 'failed'
+        assert out.details['verification_results'][0]['passed'] is False
+        assert 'escapes repo root' in out.details['verification_results'][0]['summary']
+    asyncio.run(_run())
