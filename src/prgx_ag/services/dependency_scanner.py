@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from packaging.requirements import InvalidRequirement, Requirement
+
+
+DIRECTIVE_PREFIXES = ('-r', '--requirement', '-c', '--constraint', '--index-url', '--extra-index-url', '-f', '--find-links')
+EDITABLE_PREFIXES = ('-e ', '--editable ')
+
 
 def find_dependency_manifests(root: Path) -> list[Path]:
     manifests: list[Path] = []
@@ -11,6 +17,26 @@ def find_dependency_manifests(root: Path) -> list[Path]:
             manifests.append(path)
     manifests.extend(sorted(root.glob('requirements*.txt')))
     return list(dict.fromkeys(manifests))
+
+
+def _is_requirement_line(line: str) -> bool:
+    stripped = line.strip()
+    if not stripped or stripped.startswith('#'):
+        return False
+    if stripped.startswith(DIRECTIVE_PREFIXES) or stripped.startswith(EDITABLE_PREFIXES):
+        return False
+    if stripped.startswith(('--', '-')):
+        return False
+    return True
+
+
+def _is_malformed_requirement(line: str) -> bool:
+    requirement_text = line.split('#', maxsplit=1)[0].strip()
+    try:
+        Requirement(requirement_text)
+    except InvalidRequirement:
+        return True
+    return False
 
 
 def scan_dependency_anomalies(root: Path) -> list[str]:
@@ -24,7 +50,7 @@ def scan_dependency_anomalies(root: Path) -> list[str]:
             clean = [line.strip() for line in lines if line.strip() and not line.strip().startswith('#')]
             if len(clean) != len(set(clean)):
                 anomalies.append(f'Duplicate requirement entries in {manifest.name}')
-            malformed = [line for line in clean if ' ' in line and ' @ ' not in line]
+            malformed = [line for line in clean if _is_requirement_line(line) and _is_malformed_requirement(line)]
             if malformed:
                 anomalies.append(f'Malformed requirement entries in {manifest.name}')
         if manifest.name == 'pyproject.toml' and 'dependencies' not in '\n'.join(lines):
