@@ -167,20 +167,47 @@ def _verify_fix(target: Path, fix: FixPlanEntry, rendered_content: str) -> dict[
     }
 
 
-def _verify_rendered_fix(fix: FixPlanEntry, rendered_content: str) -> dict[str, Any]:
+def _detect_write_path_issue(repo_root: Path, target: Path) -> str | None:
+    if target.exists() and target.is_dir():
+        return f"target path is an existing directory: {target.relative_to(repo_root)}"
+
+    parent = target.parent
+    if parent.exists() and not parent.is_dir():
+        return f"target parent is not a directory: {parent.relative_to(repo_root)}"
+
+    rel_parent = parent.relative_to(repo_root)
+    cursor = repo_root
+    for segment in rel_parent.parts:
+        cursor = cursor / segment
+        if cursor.exists() and not cursor.is_dir():
+            return f"mkdir would fail because path segment is a file: {cursor.relative_to(repo_root)}"
+
+    return None
+
+
+def _verify_rendered_fix(repo_root: Path, target: Path, fix: FixPlanEntry, rendered_content: str) -> dict[str, Any]:
     fix_class = str(fix.get("fix_class", ""))
     raw_metadata = fix.get("metadata")
     metadata: dict[str, Any] = raw_metadata if isinstance(raw_metadata, dict) else {}
+    path_issue = _detect_write_path_issue(repo_root, target)
 
     passed = False
     summary = "verification not run"
     if fix_class in {"create_empty_init", "manifest_sync"}:
-        passed = rendered_content == ""
-        summary = "verified dry-run payload renders an empty package marker"
+        passed = rendered_content == "" and path_issue is None
+        summary = (
+            "verified dry-run payload renders an empty package marker"
+            if path_issue is None
+            else f"dry-run detected non-writable target path: {path_issue}"
+        )
     elif fix_class == "dependency_bump":
         needle = f'{metadata.get("dependency_name", "")}{metadata.get("dependency_version", "")}'
-        passed = needle in rendered_content
-        summary = f"verified dry-run manifest contains allowlisted spec {needle}"
+        passed = needle in rendered_content and path_issue is None
+        summary = (
+            f"verified dry-run manifest contains allowlisted spec {needle}"
+            if path_issue is None
+            else f"dry-run detected non-writable target path: {path_issue}"
+        )
 
     return {
         "path": str(fix.get("path", "")),
@@ -228,7 +255,7 @@ def apply_safe_fixes(repo_root: Path, fixes: list[FixPlanEntry], allowed_paths: 
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(rendered_content, encoding="utf-8")
         else:
-            verification_results.append(_verify_rendered_fix(fix, rendered_content))
+            verification_results.append(_verify_rendered_fix(repo_root, target, fix, rendered_content))
 
         if not dry_run:
             verification_results.append(_verify_fix(target, fix, rendered_content))
