@@ -122,3 +122,9 @@ Revert this change set if consumers require previous static-only documentation r
 - Added regression coverage in `tests/test_prgx2_mechanic.py` to verify dry-run dependency bumps keep repository content and directory state unchanged.
 - Clarified the `wire_subscriptions()` compatibility comment in `src/prgx_ag/orchestrator/nexus.py` to avoid ambiguous wording drift in future edits.
 - Completed the previously proposed task set from 2026-03-19: typo/text polish, dry-run bug fix, comment/doc alignment, and dry-run regression testing.
+
+## 2026-03-28 CI workflow bug-fix and reliability hardening pass
+- Fixed `.github/workflows/proof-html.yml` by adding an explicit checkout step so HTML validation runs against repository content instead of an empty workspace.
+- Corrected `.github/workflows/main.yml` dispatch-mode behavior so `mode=scan-only` no longer runs the test phase unexpectedly.
+- Added explicit job timeouts across all active workflows to prevent stuck CI jobs from consuming unlimited runner time.
+- Removed unused `GITHUB_TOKEN` environment exports from scheduled automation jobs where the token is not directly consumed by runtime commands.

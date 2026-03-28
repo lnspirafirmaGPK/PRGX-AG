@@ -118,6 +118,7 @@ jobs:
           fi
 
       - name: Run tests
+        if: env.PRGX_WORKFLOW_MODE != 'scan-only'
         run: |
           pytest -q --maxfail=1 --disable-warnings | tee .prgx-ag/artifacts/pytest.log
 
