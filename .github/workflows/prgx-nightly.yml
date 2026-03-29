@@ -21,6 +21,8 @@ jobs:
 
     env:
       PRGX_AG_DRY_RUN: "true"
+      PRGX_RUNTIME_PROFILE: "staging"
+      PRGX_AUDIT_WINDOW_HOURS: "48"
 
     steps:
       - name: Check out repository

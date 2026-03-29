@@ -26,6 +26,10 @@ on:
         description: "GitHub Environment: development | staging | production"
         required: false
         default: "staging"
+      runtime_profile:
+        description: "Runtime profile: development | staging | production"
+        required: false
+        default: "staging"
   schedule:
     - cron: "*/30 * * * *"
 
@@ -41,7 +45,10 @@ env:
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
   PRGX_AG_DRY_RUN: "true"
   PRGX_AG_ENV: "ci"
+  PRGX_RUNTIME_PROFILE: "development"
+  PRGX_AUDIT_WINDOW_HOURS: "24"
   PRGX_LOG_DIR: ".prgx-ag/artifacts"
+  PRGX_BRANCH_CONTEXT: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
 
 jobs:
   prgx-main:
@@ -49,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
-      name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_environment || (github.ref_name == 'main' && 'production' || github.ref_name == 'master' && 'production' || github.ref_name == 'develop' && 'staging' || 'development') }}
+      name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_environment || (env.PRGX_BRANCH_CONTEXT == 'main' && 'production' || env.PRGX_BRANCH_CONTEXT == 'master' && 'production' || env.PRGX_BRANCH_CONTEXT == 'develop' && 'staging' || 'development') }}
 
     steps:
       - name: Checkout repository
@@ -61,17 +68,21 @@ jobs:
           echo "PRGX_WORKFLOW_MODE=${{ github.event.inputs.mode }}" >> "$GITHUB_ENV"
           echo "PRGX_AG_DRY_RUN=${{ github.event.inputs.dry_run }}" >> "$GITHUB_ENV"
           echo "PRGX_DEPLOY_ENV=${{ github.event.inputs.target_environment }}" >> "$GITHUB_ENV"
+          echo "PRGX_RUNTIME_PROFILE=${{ github.event.inputs.runtime_profile }}" >> "$GITHUB_ENV"
 
       - name: Set branch-derived environment defaults
         if: github.event_name != 'workflow_dispatch'
         run: |
           echo "PRGX_WORKFLOW_MODE=once" >> "$GITHUB_ENV"
-          if [ "${GITHUB_REF_NAME}" = "main" ] || [ "${GITHUB_REF_NAME}" = "master" ]; then
+          if [ "${PRGX_BRANCH_CONTEXT}" = "main" ] || [ "${PRGX_BRANCH_CONTEXT}" = "master" ]; then
             echo "PRGX_DEPLOY_ENV=production" >> "$GITHUB_ENV"
-          elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
+            echo "PRGX_RUNTIME_PROFILE=production" >> "$GITHUB_ENV"
+          elif [ "${PRGX_BRANCH_CONTEXT}" = "develop" ]; then
             echo "PRGX_DEPLOY_ENV=staging" >> "$GITHUB_ENV"
+            echo "PRGX_RUNTIME_PROFILE=staging" >> "$GITHUB_ENV"
           else
             echo "PRGX_DEPLOY_ENV=development" >> "$GITHUB_ENV"
+            echo "PRGX_RUNTIME_PROFILE=development" >> "$GITHUB_ENV"
           fi
 
       - name: Set up Python
@@ -93,6 +104,7 @@ jobs:
       - name: Announce workflow environment
         run: |
           echo "Using GitHub Environment: ${PRGX_DEPLOY_ENV}"
+          echo "Using runtime profile: ${PRGX_RUNTIME_PROFILE}"
 
       - name: Validate source tree compiles
         run: python -m compileall src
@@ -130,6 +142,7 @@ jobs:
           path: |
             .prgx-ag/artifacts/**
             .prgx-ag/audit/**
+            .prgx-ag/evidence/**
             .prgx-ag/state/**
           if-no-files-found: warn
           include-hidden-files: true

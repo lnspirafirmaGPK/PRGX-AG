@@ -240,22 +240,20 @@ The repository now reserves three GitHub Environments for workflow-controlled de
 - ไฟล์ `package.json` และ `index.html` ที่ root เป็น metadata/proofing artifacts ของรีโป ไม่ได้หมายความว่าโปรเจ็กต์นี้เป็น JavaScript frontend.
 - สถานะการยอมรับจากชุมชนควรถูกอธิบายอย่างระมัดระวังว่าเป็นโครงการระยะเริ่มต้น จนกว่าจะมีการใช้งานสาธารณะที่ชัดเจน.
 
-## New Feature / Extension Proposals (Forward-Looking Only)
+## Implemented Governance Controls (2026-03-28)
+- Typed runtime profiles are active: `development`, `staging`, and `production`.
+- Each profile applies different auto-repair thresholds and audit verbosity.
+- Runtime now writes signed governance evidence bundles that include:
+  - audit-log slices by configurable time window,
+  - fix-plan metadata,
+  - medical research findings artifact references.
 
-> Completed recommendations are intentionally excluded so this list stays focused on pending work.
+## Remaining Backlog (EN)
+1. **Policy simulation sandbox**: add `--simulate-policy` mode for non-writing policy/ruleset rehearsals.
+2. **Workflow drift dashboard export**: emit `json/csv` trend bundles for nightly and PR healing jobs.
+3. **Controlled auto-rollback hook**: add opt-in rollback execution after failed post-fix verification.
 
-1. **Policy simulation sandbox**: add `--simulate-policy` mode that runs Patimokkha/ruleset checks against hypothetical fix plans without modifying repository state.
-2. **Workflow drift dashboard export**: generate machine-readable drift summaries (`json/csv`) for nightly and PR healing runs so external observability tools can trend anomalies over time.
-3. **Controlled auto-rollback hook**: add opt-in rollback execution from stored fix snapshots when post-fix verification fails in governed CI.
-4. **Environment profile packs**: provide typed runtime profiles (`development/staging/production`) with per-environment repair thresholds and audit verbosity.
-5. **Governance evidence bundle**: package audit log slices, fix-plan metadata, and policy decisions into a signed artifact for compliance review.
-
-## ข้อเสนอฟังก์ชัน/แนวทางต่อยอดใหม่ (เฉพาะงานที่ยังไม่เสร็จ)
-
-> ตั้งใจไม่ใส่รายการข้อเสนอที่ปิดงานแล้ว เพื่อให้รายการนี้โฟกัสเฉพาะงานที่ยังต้องทำ
-
-1. **โหมดจำลองนโยบาย (Policy simulation sandbox)**: เพิ่มโหมด `--simulate-policy` เพื่อทดสอบกฎ Patimokkha/ruleset กับ fix plan สมมติ โดยไม่เขียนไฟล์ลงรีโป
-2. **รายงาน workflow drift สำหรับแดชบอร์ด**: ส่งออกสรุป drift เป็น `json/csv` จากงาน nightly และ PR healing เพื่อทำแนวโน้มความผิดปกติ
-3. **กลไก auto-rollback แบบควบคุมได้**: เพิ่ม rollback แบบ opt-in จาก snapshot เดิม เมื่อ post-fix verification ล้มเหลวใน CI
-4. **ชุด environment profile แบบกำหนดชนิด**: แยก profile `development/staging/production` พร้อม threshold การซ่อมและระดับ audit log ที่ต่างกัน
-5. **ชุดหลักฐาน governance**: รวมช่วงข้อมูล audit log, metadata ของ fix-plan และผลการตัดสินใจเชิงนโยบายเป็น artifact ที่ลงลายเซ็นเพื่อตรวจสอบ compliance
+## งานคงค้าง (TH)
+1. **โหมดจำลองนโยบาย**: เพิ่ม `--simulate-policy` เพื่อทดสอบกฎโดยไม่เขียนไฟล์จริง
+2. **รายงานแนวโน้ม workflow drift**: ส่งออก `json/csv` สำหรับติดตามแนวโน้มจาก nightly และ PR healing
+3. **กลไก auto-rollback แบบควบคุมได้**: เพิ่ม rollback แบบ opt-in เมื่อ post-fix verification ล้มเหลว

@@ -134,3 +134,9 @@ Revert this change set if consumers require previous static-only documentation r
 - Removed completed-recommendation mixing by defining forward-looking-only proposal sections in both English and Thai.
 - Added `SECURITY.md` to define vulnerability reporting, response targets, scope boundaries, and safe-harbor expectations.
 - Added `COPYRIGHT.md` to document repository copyright ownership and third-party notice expectations.
+
+## 2026-03-28 Typed environment profiles and signed governance evidence
+- Added typed runtime profiles (`development`, `staging`, `production`) in `src/prgx_ag/config.py` with per-profile auto-repair thresholds and audit verbosity controls.
+- Fixed a governance consistency bug in `PRGX3Diplomat` by building fix plans against the scanned repository target (instead of relying on process CWD), then enforcing profile-aware fix caps and issue-count gates.
+- Added signed governance evidence artifact generation in `src/prgx_ag/services/governance_evidence.py`, bundling audit-log slices, fix-plan metadata, and medical research findings references.
+- Updated GitHub workflows to pass runtime-profile/audit-window settings and include evidence artifacts in CI uploads so environment behavior remains aligned with governance expectations.

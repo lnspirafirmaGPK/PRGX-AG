@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import json
 
-from prgx_ag.config import Settings
+from prgx_ag.config import RUNTIME_PROFILES, Settings
 from prgx_ag.logging_config import configure_logging
 from prgx_ag.orchestrator import PRGX_AG_Nexus
 
@@ -17,6 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--scan-only', action='store_true')
     parser.add_argument('--repo-root', type=str)
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--runtime-profile', choices=list(RUNTIME_PROFILES))
     return parser.parse_args()
 
 
@@ -27,6 +28,8 @@ async def _main_async() -> None:
         settings.repo_root = args.repo_root
     if args.dry_run:
         settings.dry_run = True
+    if args.runtime_profile:
+        settings.runtime_profile = args.runtime_profile
     configure_logging(settings.log_level)
     nexus = PRGX_AG_Nexus(settings)
 

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
+
+from prgx_ag.config import RUNTIME_PROFILES, RuntimeProfileName
 from uuid import uuid4
 
 from prgx_ag.core import BaseAgent
@@ -27,9 +30,11 @@ class PRGX3Diplomat(BaseAgent):
         checker: PatimokkhaChecker | None = None,
         agent_id: str = "PRGX3",
         role: str = "Diplomat",
+        runtime_profile: RuntimeProfileName = "development",
     ) -> None:
         super().__init__(agent_id=agent_id, role=role, bus=bus)
         self.checker = checker or PatimokkhaChecker()
+        self.runtime_profile = runtime_profile
 
     async def start(self) -> None:
         await super().start()
@@ -58,7 +63,33 @@ class PRGX3Diplomat(BaseAgent):
             return
 
         intent = self.create_healing_intent(findings)
-        fixes = build_fix_plan(findings)
+        repo_root = Path(str(findings.get("target", ".")))
+        profile = RUNTIME_PROFILES[self.runtime_profile]
+
+        raw_issue_count = findings.get("issue_count")
+        if isinstance(raw_issue_count, int):
+            issue_count = raw_issue_count
+        elif isinstance(raw_issue_count, str):
+            try:
+                issue_count = int(raw_issue_count.strip())
+            except ValueError:
+                issue_count = profile.max_issue_count_for_auto_fix + 1
+        else:
+            issue_count = profile.max_issue_count_for_auto_fix + 1
+
+        if issue_count > profile.max_issue_count_for_auto_fix:
+            self.logger.warning(
+                "Issue count %s exceeds %s profile threshold %s; skip execution.",
+                issue_count,
+                profile.name,
+                profile.max_issue_count_for_auto_fix,
+            )
+            return
+
+        fixes = build_fix_plan(findings, repo_root=repo_root)
+        if len(fixes) > profile.max_auto_fix_items:
+            fixes = fixes[: profile.max_auto_fix_items]
+
         envelope_id = str(uuid4())
         audit_status, audit = self.evaluate_audit(intent)
 
