@@ -166,3 +166,8 @@ Revert this change set if consumers require previous static-only documentation r
   - Problem: Existing tests cover happy paths for `ManifestLoader`, but do not assert failures for missing file paths or invalid YAML object shapes.
   - Proposed fix: Add tests that verify `FileNotFoundError` and `ValueError` behavior from `_load_yaml()` through public loader methods.
   - Outcome: Stronger regression protection for governance manifest integrity handling.
+
+## 2026-04-02 README architecture refocus and proposal hygiene update
+- Reworked `README.md` architecture coverage to include an Augmented Perception Layer high-level module flow (Genesis, Manifest, BioVision, Governor, PRGX, Tachyon, Edge/WASM) tied directly to repository-backed `.prgx-ag` data stores.
+- Removed completed-recommendation style sections from bilingual README content so active backlog/proposals do not mix with already-finished work items.
+- Added explicit "Open Problems & Required Fixes" plus forward proposal backlogs (EN/TH) to keep unresolved risks, required remediations, and next-step feature proposals visible in one operational section.

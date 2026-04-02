@@ -243,20 +243,94 @@ The repository now reserves three GitHub Environments for workflow-controlled de
 - ไฟล์ `package.json` และ `index.html` ที่ root เป็น metadata/proofing artifacts ของรีโป ไม่ได้หมายความว่าโปรเจ็กต์นี้เป็น JavaScript frontend.
 - สถานะการยอมรับจากชุมชนควรถูกอธิบายอย่างระมัดระวังว่าเป็นโครงการระยะเริ่มต้น จนกว่าจะมีการใช้งานสาธารณะที่ชัดเจน.
 
-## Implemented Governance Controls (2026-03-28)
-- Typed runtime profiles are active: `development`, `staging`, and `production`.
-- Each profile applies different auto-repair thresholds and audit verbosity.
-- Runtime now writes signed governance evidence bundles that include:
-  - audit-log slices by configurable time window,
-  - fix-plan metadata,
-  - medical research findings artifact references.
+## Augmented Perception Layer (High-Level, TH)
 
-## Remaining Backlog (EN)
-1. **Policy simulation sandbox**: add `--simulate-policy` mode for non-writing policy/ruleset rehearsals.
-2. **Workflow drift dashboard export**: emit `json/csv` trend bundles for nightly and PR healing jobs.
-3. **Controlled auto-rollback hook**: add opt-in rollback execution after failed post-fix verification.
+> เป้าหมาย: แสงเป็น “ตัวเชื่อม (connector)” ระหว่าง Intent ของผู้ใช้กับประสบการณ์ที่แสดงผลได้ทั้งโหมดแอปเดิมและโหมด Light-native โดยไม่รบกวนเนื้อหาหลัก
 
-## งานคงค้าง (TH)
-1. **โหมดจำลองนโยบาย**: เพิ่ม `--simulate-policy` เพื่อทดสอบกฎโดยไม่เขียนไฟล์จริง
-2. **รายงานแนวโน้ม workflow drift**: ส่งออก `json/csv` สำหรับติดตามแนวโน้มจาก nightly และ PR healing
-3. **กลไก auto-rollback แบบควบคุมได้**: เพิ่ม rollback แบบ opt-in เมื่อ post-fix verification ล้มเหลว
+### System Architecture Diagram (Database + Module Contract)
+
+```mermaid
+flowchart LR
+    U[Voice / Intent Input] --> G[Genesis
+Intent Parser + Scene Planner]
+    G --> M[Manifest
+Intent Contract + Visual Contract + Scene Contract]
+
+    BV[BioVision
+Environment & Layer Analyzer] --> GOV[Governor
+Brightness / Curfew / Geo-fence]
+    BV --> PX[PRGX
+Policy Enforcement + Abuse Prevention]
+    GOV --> M
+    PX --> M
+
+    M --> T[Tachyon
+Realtime Stream + Time Sync]
+    T --> E[Edge/WASM Runtime
+Low-Latency Compose]
+    E --> O[Display Targets
+Mobile/Desktop/AR-VR/Projector/Building]
+
+    subgraph DB[Repository-backed data stores (.prgx-ag)]
+      P1[(policy/patimokkha.yaml)]
+      P2[(policy/ruleset.yaml)]
+      MF[(manifests/*.yaml)]
+      WF[(workflows/*.yaml)]
+      AUD[(audit/audit_log.jsonl)]
+      LS[(state/learning_state.json)]
+      GL[(state/gem_log.json)]
+      AL[(allowlists/dependency_policy.yaml)]
+    end
+
+    P1 --> PX
+    P2 --> PX
+    MF --> M
+    WF --> G
+    AL --> PX
+    PX --> AUD
+    GOV --> AUD
+    T --> AUD
+    AUD --> LS
+    LS --> GL
+```
+
+### Inspira-Firma Duality (single intent, dual rendering)
+- **A) Legacy OS Mode (Android/iOS/Windows):** intent เดียวกันถูก map เป็น action ของแอป/OS เดิม
+- **B) Light-native Mode:** intent เดียวกันถูก map เป็น scene graph + light composition สำหรับการฉาย/overlay
+
+### Primary Use Paths
+1. **U1 ผู้ใช้ทั่วไป:** เสียง → intent → เลือกเปิดแอปเดิมหรือแสดงผลด้วยแสงแบบ contextual
+2. **U2 นักพัฒนา:** เขียนสัญญา intent/visual ครั้งเดียว แล้ว runtime map ไปทุก target device
+3. **U3 องค์กร/สื่อ:** Interactive Living Light ปรับตามเวลา/บริบท/คำพูดแบบต่อเนื่อง
+
+## Open Problems & Required Fixes (TH)
+
+1. **Real-time layer synchronization ยังต้องพิสูจน์ภาคสนาม**
+   - ปัญหา: การ sync foreground/background + motion alignment ข้ามอุปกรณ์ยังเสี่ยง jitter
+   - ควรแก้: เพิ่ม deterministic timestamp pipeline (capture_ts, infer_ts, compose_ts, display_ts) และ drift compensation ใน Tachyon/Edge
+
+2. **Latency budget ยังไม่ถูกบังคับเป็น SLO ในทุกโหมด**
+   - ปัญหา: VR/AR, projector, building projection มี constraint ต่างกันแต่ยังไม่มี gate กลาง
+   - ควรแก้: เพิ่ม benchmark gate ใน CI/field test พร้อม pass/fail thresholds แยกโหมด
+
+3. **Safety policy สำหรับพื้นที่ชุมชนยังต้องละเอียดขึ้น**
+   - ปัญหา: brightness/curfew/geo-fence ยังไม่ผูกกับ risk class ของพื้นที่
+   - ควรแก้: เพิ่ม Governor policy tiers (residential/commercial/event) + emergency override protocol
+
+4. **Auditability เชิงนิติวิทยาศาสตร์ยังไม่ครบวงจร**
+   - ปัญหา: ยังต้อง trace intent → policy decision → output frame ได้แบบ end-to-end
+   - ควรแก้: บังคับ immutable audit chain พร้อม signed evidence bundles ต่อ session
+
+## Forward Proposal Backlog (EN)
+1. **Intent/Visual Contract SDK**: provide versioned schema package + compatibility linter for developers.
+2. **BioVision Adaptive Profiles**: add weather/time-of-day adaptive presets with explainable policy traces.
+3. **Tachyon Time-Sync Kit**: expose monotonic clock sync API + predicted-display-time estimator.
+4. **Community-safe Projection Pack**: ship default Governor profiles for residential/commercial/public-event scenarios.
+5. **Edge/WASM Determinism Suite**: reproducible rendering test vectors across AR glasses/projectors.
+
+## ข้อเสนอการต่อยอด (TH)
+1. **SDK สัญญา Intent/Visual**: ให้ทีมพัฒนาเขียนสเปกครั้งเดียวและตรวจ backward compatibility ได้อัตโนมัติ
+2. **โปรไฟล์ BioVision อัตโนมัติ**: ปรับภาพตามสภาพแสง/ฝน/หมอก/กลางวัน-กลางคืน พร้อมเหตุผลเชิง policy
+3. **ชุดเวลา Tachyon**: มี API สำหรับ timestamp มาตรฐานและคาดการณ์เวลาที่ frame จะถูกแสดงผลจริง
+4. **แพ็ก Governor สำหรับชุมชน**: เทมเพลตควบคุมความสว่าง-ช่วงเวลา-พื้นที่แบบปลอดภัยพร้อมใช้
+5. **ชุดทดสอบ Edge/WASM**: benchmark เดียวกันรันได้ทุกอุปกรณ์เพื่อลดพฤติกรรมไม่คงที่
