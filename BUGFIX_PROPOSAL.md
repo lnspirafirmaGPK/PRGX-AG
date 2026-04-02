@@ -145,3 +145,24 @@ Revert this change set if consumers require previous static-only documentation r
 - Fixed `.github/workflows/main.yml` by removing a duplicated `environment:` key that risked workflow parsing/maintenance drift and by aligning branch-derived environment mapping to use `PRGX_BRANCH_CONTEXT` consistently.
 - Rebuilt `.github/workflows/stale.yml` as an explicit governance workflow with manual dispatch, top-level permissions, concurrency, timeout, and modern `actions/stale@v10` settings.
 - Standardized stale lifecycle behavior with concrete stale/close windows, clear issue/PR messaging, exempt governance/security labels, and automatic stale-label removal on new activity.
+
+## 2026-04-02 Targeted quality backlog from codebase review
+
+- **[Text typo fix] Add automated typo guardrail for bilingual docs and code comments.**
+  - Problem: The repository has many human-written governance documents (EN/TH) but no typo-detection step in CI, so wording defects can slip into architecture/policy text and reduce trust.
+  - Proposed fix: Add a lightweight `codespell` check (configured to ignore domain-specific terms such as `Patimokkha`, `Sanghadisesa`, `AetherBus`) and run it in CI plus local `make`/`nox`/`pytest` helper command.
+  - Suggested scope: `README.md`, `SECURITY.md`, `OFFICIAL_SYSTEM_INTEGRATION_REPORT_TH.md`, `ATR_MF_AUGMENTED_PERCEPTION_ARCHITECTURE_TH.md`, and Python docstrings/comments.
+
+- **[Bug fix] Harden target-path normalization against parent-directory traversal markers.**
+  - Problem: `src/prgx_ag/services/translation_matrix.py` normalizes intent targets by removing empty and `.` path segments, but it does not remove `..` segments.
+  - Risk: A crafted finding target such as `../sensitive/path` could be propagated into intent metadata/narrative, increasing ambiguity and policy-review risk.
+  - Proposed fix: Update `_normalize_target()` to discard `..` segments and add explicit tests for traversal-like input.
+
+- **[Comment/Documentation mismatch fix] Align CLI examples with documented release-check commands in one place.**
+  - Problem: README currently mixes operational commands and release-gate checks in separate sections; this can cause maintainers to run only quick examples and miss required checks.
+  - Proposed fix: Add a short “Release check sequence” block that references the exact required commands and links it from CLI/testing sections to reduce interpretation drift.
+
+- **[Test improvement] Add contract tests for manifest loader error behavior.**
+  - Problem: Existing tests cover happy paths for `ManifestLoader`, but do not assert failures for missing file paths or invalid YAML object shapes.
+  - Proposed fix: Add tests that verify `FileNotFoundError` and `ValueError` behavior from `_load_yaml()` through public loader methods.
+  - Outcome: Stronger regression protection for governance manifest integrity handling.
