@@ -69,12 +69,15 @@ def test_prgx3_issue_count_gate_allows_execution_at_production_threshold(
         }
         # build_fix_plan may return empty list without real dir structure;
         # that is fine — we only assert EXECUTE_FIX is NOT suppressed by the gate
-        await diplomat.receive_issue_report(findings)
+        with patch(
+            'prgx_ag.agents.prgx3_diplomat.build_fix_plan',
+            return_value=[{'action': 'test-fix', 'path': 'test'}],
+        ):
+            await diplomat.receive_issue_report(findings)
 
-        # No assertion on EXECUTE_FIX presence since fix plan may be empty,
-        # but the issue-count gate must not have returned early (no warning skip)
-        # Verified by absence of an early return due to issue count gate
-        assert True  # gate did not block; flow reached build_fix_plan
+        # Verify the gate allowed execution by checking EXECUTE_FIX was published
+        topics = [topic for topic, _ in bus.history]
+        assert EXECUTE_FIX in topics
 
     asyncio.run(_run())
 
@@ -124,10 +127,15 @@ def test_prgx3_issue_count_aggregation_below_threshold_is_not_blocked(
             'integrity_issues': [],
             'requires_fix': True,
         }
-        await diplomat.receive_issue_report(findings)
-        # Gate should not have blocked; if build_fix_plan returned empty that's ok
-        # We just confirm the code reached evaluation (no exception from gate exit)
-        assert True
+        with patch(
+            'prgx_ag.agents.prgx3_diplomat.build_fix_plan',
+            return_value=[{'action': 'test-fix', 'path': 'test'}],
+        ):
+            await diplomat.receive_issue_report(findings)
+
+        # Verify the gate allowed execution by checking EXECUTE_FIX was published
+        topics = [topic for topic, _ in bus.history]
+        assert EXECUTE_FIX in topics
 
     asyncio.run(_run())
 
@@ -154,7 +162,9 @@ def test_prgx3_non_actionable_report_does_not_publish_any_events(
 
         # The only subscribed event is ISSUE_REPORTED which happens upstream;
         # diplomat itself should publish nothing when not actionable
-        assert bus.history == []
+        topics = [topic for topic, _ in bus.history]
+        assert not topics
+
     asyncio.run(_run())
 
 
