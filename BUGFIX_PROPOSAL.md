@@ -140,3 +140,8 @@ Revert this change set if consumers require previous static-only documentation r
 - Fixed a governance consistency bug in `PRGX3Diplomat` by building fix plans against the scanned repository target (instead of relying on process CWD), then enforcing profile-aware fix caps and issue-count gates.
 - Added signed governance evidence artifact generation in `src/prgx_ag/services/governance_evidence.py`, bundling audit-log slices, fix-plan metadata, and medical research findings references.
 - Updated GitHub workflows to pass runtime-profile/audit-window settings and include evidence artifacts in CI uploads so environment behavior remains aligned with governance expectations.
+
+## 2026-04-02 Workflow consistency and stale-governance hardening
+- Fixed `.github/workflows/main.yml` by removing a duplicated `environment:` key that risked workflow parsing/maintenance drift and by aligning branch-derived environment mapping to use `PRGX_BRANCH_CONTEXT` consistently.
+- Rebuilt `.github/workflows/stale.yml` as an explicit governance workflow with manual dispatch, top-level permissions, concurrency, timeout, and modern `actions/stale@v10` settings.
+- Standardized stale lifecycle behavior with concrete stale/close windows, clear issue/PR messaging, exempt governance/security labels, and automatic stale-label removal on new activity.

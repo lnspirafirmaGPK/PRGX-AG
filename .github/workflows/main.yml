@@ -56,7 +56,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
-    environment:
       name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_environment || ((github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name) == 'main' && 'production' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name) == 'master' && 'production' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name) == 'develop' && 'staging' || 'development') }}
 
     steps:
@@ -78,7 +77,7 @@ jobs:
           if [ "${PRGX_BRANCH_CONTEXT}" = "main" ] || [ "${PRGX_BRANCH_CONTEXT}" = "master" ]; then
             echo "PRGX_DEPLOY_ENV=production" >> "$GITHUB_ENV"
             echo "PRGX_RUNTIME_PROFILE=production" >> "$GITHUB_ENV"
-          elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
+          elif [ "${PRGX_BRANCH_CONTEXT}" = "develop" ]; then
             echo "PRGX_DEPLOY_ENV=staging" >> "$GITHUB_ENV"
             echo "PRGX_RUNTIME_PROFILE=staging" >> "$GITHUB_ENV"
           else

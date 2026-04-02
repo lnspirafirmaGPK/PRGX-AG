@@ -1,27 +1,45 @@
-# This workflow warns and then closes issues and PRs that have had no activity for a specified amount of time.
-#
-# You can adjust the behavior by modifying this file.
-# For more information, see:
-# https://github.com/actions/stale
-name: Mark stale issues and pull requests
+name: stale-governance
 
 on:
   schedule:
-  - cron: '21 7 * * *'
+    - cron: '21 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: stale-governance-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
   stale:
-
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-
+    timeout-minutes: 10
     steps:
-    - uses: actions/stale@v5
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-message: 'Stale issue message'
-        stale-pr-message: 'Stale pull request message'
-        stale-issue-label: 'no-issue-activity'
-        stale-pr-label: 'no-pr-activity'
+      - name: Mark stale issues and pull requests
+        uses: actions/stale@v10
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-stale: 30
+          days-before-close: 14
+          stale-issue-label: no-issue-activity
+          stale-pr-label: no-pr-activity
+          exempt-issue-labels: pinned,security,governance,planned
+          exempt-pr-labels: pinned,security,governance
+          stale-issue-message: >-
+            This issue has had no activity for 30 days and is now marked stale.
+            Add a comment or update to keep it open.
+          close-issue-message: >-
+            Closing this stale issue after 14 additional days without activity.
+            Reopen with new context if this is still needed.
+          stale-pr-message: >-
+            This pull request has had no activity for 30 days and is now marked stale.
+            Add a comment or push a commit to keep it open.
+          close-pr-message: >-
+            Closing this stale pull request after 14 additional days without activity.
+            Reopen when ready to continue.
+          operations-per-run: 200
+          remove-stale-when-updated: true
